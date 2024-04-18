@@ -1,0 +1,56 @@
+zeus-account-processor:
+  api:
+    version: 1.0.0
+url:
+  host:
+    member-mgmt: http://localhost:8084/api/v1/
+server:
+  port: 9004
+spring:
+  application:
+    name: premium-billing
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        debug: true
+  profiles:
+    active: clean, local
+  datasource:
+    url: jdbc:mysql://localhost:3306/premiumbillingdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+    username: premiumbillingapp
+    password: password
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: zeus-premium-billing-consumer-group
+      enable-auto-commit: true
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "*"
+  flyway:
+    user: premiumbillingadmin
+    password: password
+    clean-disabled: false
+  logging:
+    file:
+      name: logs/local/premium-billing.log
+    level:
+      org:
+        hibernate:
+          type:
+            descriptor:
+              sql: trace
+        springframework:
+          data:
+            jpa: INFO
