@@ -69,4 +69,14 @@ public class PremiumPaymentHelperImpl implements PremiumPaymentHelper {
         });
         enrollmentSpanDto.setPremiumPayments(premiumPaymentDtos);
     }
+
+    /**
+     * Get premium payments for the enrollment span code
+     * @param enrollmentSpanCode
+     * @return
+     */
+    @Override
+    public List<PremiumPayment> getPremiumPayments(String enrollmentSpanCode) {
+        return premiumPaymentRepository.findPremiumPaymentsByEnrollmentSpanCode(enrollmentSpanCode);
+    }
 }

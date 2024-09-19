@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
  * Created in Intellij IDEA
  * User: Balaji Varadharajan
@@ -73,5 +75,25 @@ public class PremiumSpanMapperImpl implements PremiumSpanMapper {
                 .csrAmount(premiumSpan.getCsrAmount())
                 .build();
         return premiumSpanDto;
+    }
+
+    /**
+     * Convert premium span dtos to premium span entities
+     * @param premiumSpanDtos
+     * @return
+     */
+    @Override
+    public List<PremiumSpan> premiumSpanDtosToPremiumSpans(List<PremiumSpanDto> premiumSpanDtos) {
+        return premiumSpanDtos.stream().map(this::premiumSpanDtoToPremiumSpan).toList();
+    }
+
+    /**
+     * Convert premium span entities to premium span dtos
+     * @param premiumSpans
+     * @return
+     */
+    @Override
+    public List<PremiumSpanDto> premiumSpansToPremiumSpanDtos(List<PremiumSpan> premiumSpans) {
+        return premiumSpans.stream().map(this::premiumSpanToPremiumSpanDto).toList();
     }
 }

@@ -32,4 +32,9 @@ public interface AccountService {
      * @param premiumPaymentDto
      */
     void createPremiumPayment(PremiumPaymentDto premiumPaymentDto);
+
+    /**
+     * Clean up the database
+     */
+    void deleletAll();
 }

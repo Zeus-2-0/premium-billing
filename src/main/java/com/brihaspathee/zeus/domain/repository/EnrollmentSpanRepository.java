@@ -1,9 +1,11 @@
 package com.brihaspathee.zeus.domain.repository;
 
+import com.brihaspathee.zeus.domain.entity.Account;
 import com.brihaspathee.zeus.domain.entity.EnrollmentSpan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,4 +27,11 @@ public interface EnrollmentSpanRepository extends JpaRepository<EnrollmentSpan, 
      * @return - return the matched enrollment span
      */
     Optional<EnrollmentSpan> findEnrollmentSpanByEnrollmentSpanCode(String enrollmentSpanCode);
+
+    /**
+     * Find enrollment span by account
+     * @param accountNumber
+     * @return
+     */
+    List<EnrollmentSpan> findEnrollmentSpanByAccount_AccountNumber(String accountNumber);
 }
