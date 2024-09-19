@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.brihaspathee.zeus</groupId>
     <artifactId>premium-billing</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <name>Premium Billing</name>
     <description>premium-billing</description>
     <properties>
@@ -30,7 +30,7 @@
         <!--        <developerConnection>scm:git:ssh://github.com:Zeus-2-0/premium-billing.git</developerConnection>-->
         <developerConnection>scm:git:git@github.com:Zeus-2-0/premium-billing.git</developerConnection>
         <url>scm:git:http://github.com/Zeus-2-0/premium-billing</url>
-        <tag>premium-billing-1.0.1</tag>
+        <tag>premium-billing-1.0.0</tag>
     </scm>
 
     <developers>
