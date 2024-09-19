@@ -33,4 +33,11 @@ public interface PremiumPaymentHelper {
      * @param premiumPayments
      */
     void setPremiumPayment(EnrollmentSpanDto enrollmentSpanDto, List<PremiumPayment> premiumPayments);
+
+    /**
+     * Get premium payments for the enrollment span code
+     * @param enrollmentSpanCode
+     * @return
+     */
+    List<PremiumPayment> getPremiumPayments(String enrollmentSpanCode);
 }

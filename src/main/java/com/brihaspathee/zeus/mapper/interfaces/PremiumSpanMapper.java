@@ -3,6 +3,8 @@ package com.brihaspathee.zeus.mapper.interfaces;
 import com.brihaspathee.zeus.domain.entity.PremiumSpan;
 import com.brihaspathee.zeus.dto.account.PremiumSpanDto;
 
+import java.util.List;
+
 /**
  * Created in Intellij IDEA
  * User: Balaji Varadharajan
@@ -27,4 +29,18 @@ public interface PremiumSpanMapper {
      * @return - the converted dto
      */
     PremiumSpanDto premiumSpanToPremiumSpanDto(PremiumSpan premiumSpan);
+
+    /**
+     * Convert premium span dtos to premium span entities
+     * @param premiumSpanDtos
+     * @return
+     */
+    List<PremiumSpan> premiumSpanDtosToPremiumSpans(List<PremiumSpanDto> premiumSpanDtos);
+
+    /**
+     * Convert premium span entities to premium span dtos
+     * @param premiumSpans
+     * @return
+     */
+    List<PremiumSpanDto> premiumSpansToPremiumSpanDtos(List<PremiumSpan> premiumSpans);
 }

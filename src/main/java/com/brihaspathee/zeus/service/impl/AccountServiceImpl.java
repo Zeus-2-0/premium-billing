@@ -7,6 +7,7 @@ import com.brihaspathee.zeus.dto.account.PremiumPaymentDto;
 import com.brihaspathee.zeus.exception.AccountNotFoundException;
 import com.brihaspathee.zeus.helper.interfaces.EnrollmentSpanHelper;
 import com.brihaspathee.zeus.mapper.interfaces.AccountMapper;
+import com.brihaspathee.zeus.service.TransactionProcessingContext;
 import com.brihaspathee.zeus.service.interfaces.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void updateAccount(AccountDto accountDto) {
         log.info("Inside the account service to update the account");
+        // Create the transaction processing context
+        TransactionProcessingContext context = TransactionProcessingContext.builder()
+                .sendUpdateToMMS(false)
+                .build();
         // get the account number of the account
         String accountNumber = accountDto.getAccountNumber();
         // check if the account already exists
@@ -57,7 +62,7 @@ public class AccountServiceImpl implements AccountService {
         if(optional.isPresent()){
             // perform updates on the account
             if(accountDto.getEnrollmentSpans() !=null){
-                enrollmentSpanHelper.updateEnrollmentSpan(optional.get(),
+                enrollmentSpanHelper.updateEnrollmentSpan(context, optional.get(),
                         accountDto.getEnrollmentSpans().stream().toList());
             }
         }else{
@@ -93,14 +98,26 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
+     * Clean up the repository
+     */
+    @Override
+    public void deleletAll() {
+        accountRepository.deleteAll();
+    }
+
+    /**
      * Create the new account
      * @param accountDto
      */
     private void createAccount(AccountDto accountDto){
         Account account = accountMapper.accountDtoToAccount(accountDto);
         account = accountRepository.save(account);
+        // Create the transaction processing context
+        TransactionProcessingContext context = TransactionProcessingContext.builder()
+                .sendUpdateToMMS(false)
+                .build();
         log.info("Account is created:{}", account.getAccountSK());
-        enrollmentSpanHelper.updateEnrollmentSpan(account, accountDto.getEnrollmentSpans().stream().toList());
+        enrollmentSpanHelper.updateEnrollmentSpan(context, account, accountDto.getEnrollmentSpans().stream().toList());
     }
 
     /**

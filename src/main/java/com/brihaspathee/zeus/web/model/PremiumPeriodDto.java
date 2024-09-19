@@ -21,16 +21,37 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class PremiumPeriodDto {
 
+    /**
+     * Start of the premium period
+     */
     private LocalDate startPeriod;
 
+    /**
+     * End of the premium period
+     */
     private LocalDate endPeriod;
 
+    /**
+     * Monthly responsible amount
+     */
     private BigDecimal responsibilityAmount;
 
+    /**
+     * Cumulative amounts that are to be paid by the end of the period
+     */
     private BigDecimal paidThroughAmount;
 
+    /**
+     * The percentage of the responsibility amount for the period
+     * It will be 1 if the period is for a full month
+     * It will be less than 1 if the period is for less than a month
+     */
     private double premiumPercent;
 
+    /**
+     * toString method
+     * @return
+     */
     @Override
     public String toString() {
         return "PremiumPeriodDto{" +

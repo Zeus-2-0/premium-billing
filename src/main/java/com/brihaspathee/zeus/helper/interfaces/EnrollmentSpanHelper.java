@@ -5,6 +5,7 @@ import com.brihaspathee.zeus.domain.entity.EnrollmentSpan;
 import com.brihaspathee.zeus.dto.account.AccountDto;
 import com.brihaspathee.zeus.dto.account.EnrollmentSpanDto;
 import com.brihaspathee.zeus.dto.account.PremiumPaymentDto;
+import com.brihaspathee.zeus.service.TransactionProcessingContext;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,23 +31,25 @@ public interface EnrollmentSpanHelper {
 
     /**
      * Update the enrollment span
+     * @param context
      * @param account
      * @param enrollmentSpanDtos
      */
-    void updateEnrollmentSpan(Account account,
+    void updateEnrollmentSpan(TransactionProcessingContext context,
+                              Account account,
                               List<EnrollmentSpanDto> enrollmentSpanDtos);
 
-    /**
-     * Update the enrollment span status and paid through date
-     * @param enrollmentSpan
-     * @param effectuationDate
-     * @param paidThruDate
-     * @param status
-     */
-    void updateEnrollmentSpan(EnrollmentSpan enrollmentSpan,
-                              LocalDate effectuationDate,
-                              LocalDate paidThruDate,
-                              String status);
+//    /**
+//     * Update the enrollment span status and paid through date
+//     * @param enrollmentSpan
+//     * @param effectuationDate
+//     * @param paidThruDate
+//     * @param status
+//     */
+//    void updateEnrollmentSpan(EnrollmentSpan enrollmentSpan,
+//                              LocalDate effectuationDate,
+//                              LocalDate paidThruDate,
+//                              String status);
 
     /**
      * Create enrollment span dto from enrollment span entity and set it in the account dto
