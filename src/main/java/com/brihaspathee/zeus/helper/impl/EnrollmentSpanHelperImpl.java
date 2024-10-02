@@ -500,6 +500,8 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                 context.setSendUpdateToMMS(true);
             }
         }else{
+            // Check if the enrollment span is being termed or canceled
+            checkForTermOrCancel(context, account, currentEnrollmentSpan, enrollmentSpanDto);
             // the enrollment span is not new
             LocalDate currentPaidThruDate = currentEnrollmentSpan.getPaidThroughDate();
             if(currentPaidThruDate == null &&
@@ -553,6 +555,42 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                 context.setSendUpdateToMMS(true);
 
             }
+        }
+    }
+
+    /**
+     * Check if the enrollment span is being termed or canceled
+     * @param context
+     * @param account
+     * @param currentEnrollmentSpan
+     * @param enrollmentSpanDto
+     */
+    private void checkForTermOrCancel(TransactionProcessingContext context,
+                                      Account account,
+                                      EnrollmentSpan currentEnrollmentSpan,
+                                      EnrollmentSpanDto enrollmentSpanDto){
+        String currentEnrollmentSpanStatus = currentEnrollmentSpan.getStatusTypeCode();
+        String spanStatus = enrollmentSpanDto.getStatusTypeCode();
+        if(spanStatus.equals(currentEnrollmentSpanStatus)){
+            // if the status are different check if the end date is being updated
+            // which will indicate that the span is being termed
+            LocalDate spanEndDate = enrollmentSpanDto.getEndDate();
+            LocalDate currentEndDate = currentEnrollmentSpan.getEndDate();
+            if(!spanEndDate.isEqual(currentEndDate)){
+                // the end dates are different
+                context.setESGettingTermed(true);
+            }
+        }else{
+            if(spanStatus.equals(EnrollmentSpanStatus.CANCELED.toString())){
+                context.setESGettingCanceled(true);
+            }
+        }
+        // if the enrollment span is being termed or canceled
+        // get the next immediate enrollment span and store it in the context
+        if(context.isESGettingTermed() ||
+        context.isESGettingCanceled()){
+            EnrollmentSpan enrollmentSpan = getNextEnrollmentSpan(account, currentEnrollmentSpan.getEndDate());
+            context.setNextEnrollmentSpan(enrollmentSpan);
         }
     }
 
@@ -642,6 +680,38 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                 .map(paymentPaidThruDate::isAfter)
                 .orElse(true))
                 .orElse(psPTD);
+    }
+
+    /**
+     * Get the next non-canceled enrollment span after the effective date
+     * @param account
+     * @param effectiveDate
+     * @return
+     */
+    private EnrollmentSpan getNextEnrollmentSpan(Account account, LocalDate effectiveDate){
+        List<EnrollmentSpan> enrollmentSpans = enrollmentSpanRepository.findEnrollmentSpanByAccount_AccountNumber(
+                account.getAccountNumber());
+        enrollmentSpans =
+                enrollmentSpans.stream()
+                        .sorted(Comparator.comparing(EnrollmentSpan::getStartDate))
+                        .collect(Collectors.toList());
+        enrollmentSpans =
+                enrollmentSpans.stream()
+                        .takeWhile(
+                                enrollmentSpanDto ->
+                                        enrollmentSpanDto.getEndDate().isAfter(effectiveDate))
+                        .collect(Collectors.toList());
+        enrollmentSpans = enrollmentSpans.stream()
+                .filter(
+                        enrollmentSpan1 ->
+                                !enrollmentSpan1.getStatusTypeCode()
+                                        .equals(EnrollmentSpanStatus.CANCELED.toString()))
+                .collect(Collectors.toList());
+        if(!enrollmentSpans.isEmpty()){
+            return enrollmentSpans.getFirst();
+        }else {
+            return null;
+        }
     }
 
     /**

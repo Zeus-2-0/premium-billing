@@ -13,6 +13,56 @@ servers:
 - url: http://localhost:9004
   description: Development Server
 paths:
+  /api/v1/zeus/premium-billing/payment:
+    post:
+      tags:
+      - premium-billing
+      description: Create a new payment
+      operationId: Create a new payemnt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PremiumPaymentDto"
+        required: true
+      responses:
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiExceptionList"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiExceptionList"
+        "201":
+          description: Successfully created the payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountDto"
+  /api/v1/zeus/premium-billing/{accountNumber}:
+    get:
+      tags:
+      - premium-billing
+      description: Get the details of the account by its number
+      operationId: Get Account by account number
+      parameters:
+      - name: accountNumber
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Successfully retrieved the details of the account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountDto"
   /api/v1/zeus/premium-billing/welcome:
     get:
       tags:
@@ -25,11 +75,1502 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WelcomeDto'
+                $ref: "#/components/schemas/WelcomeDto"
+  /api/v1/zeus/premium-billing/delete:
+    delete:
+      tags:
+      - premium-billing
+      description: Delete all data
+      operationId: Delete all data
+      responses:
+        "204":
+          description: Data deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ZeusApiResponse"
 components:
   schemas:
+    PremiumPaymentDto:
+      required:
+      - enrollmentSpanCode
+      - paymentAmount
+      - paymentDate
+      type: object
+      properties:
+        enrollmentSpanCode:
+          type: string
+          description: Enrollment Span Code
+          example: IDNTD4VNLJK9VL3
+        paymentAmount:
+          type: number
+          description: Premium Amount being paid
+          example: 350.0
+        paymentDate:
+          type: string
+          description: The payment date of the premium span
+          format: date
+    ApiException:
+      type: object
+      properties:
+        exceptionCode:
+          type: string
+        exceptionMessage:
+          type: string
+    ApiExceptionList:
+      type: object
+      properties:
+        exceptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiException"
+    AccountAttributeDto:
+      required:
+      - attributeSK
+      - attributeValue
+      - source
+      type: object
+      properties:
+        accountAttributeSK:
+          type: string
+          description: Account Attribute SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        attributeSK:
+          type: string
+          description: Attribute SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        accountSK:
+          type: string
+          description: Account SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        attributeValue:
+          type: string
+          description: The value of the attribute
+          example: FFM-FL
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        createdDate:
+          type: string
+          description: The date when the account attribute was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the account attribute was updated
+          format: date-time
+    AccountDto:
+      required:
+      - accountNumber
+      - brokers
+      - enrollmentSpans
+      - lineOfBusinessTypeCode
+      - members
+      - payers
+      - source
+      - sponsors
+      type: object
+      properties:
+        accountSK:
+          type: string
+          description: Account SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        accountNumber:
+          type: string
+          description: Account Number - Unique id that is assigned to the account
+          example: DFEV323455DE5S3
+        lineOfBusinessTypeCode:
+          type: string
+          description: Line of business of the account
+          example: HIX
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the account
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        enrollmentSpans:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/EnrollmentSpanDto"
+        members:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberDto"
+        brokers:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/BrokerDto"
+        sponsors:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/SponsorDto"
+        payers:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/PayerDto"
+        accountAttributes:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/AccountAttributeDto"
+        createdDate:
+          type: string
+          description: The date when the account was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the account was updated
+          format: date-time
+    AlternateContactDto:
+      required:
+      - addressLine2
+      - alternateContactCode
+      - alternateContactTypeCode
+      - changed
+      - lastName
+      - source
+      - startDate
+      - stateTypeCode
+      type: object
+      properties:
+        alternateContactSK:
+          type: string
+          description: Alternate Contact SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        alternateContactCode:
+          type: string
+          description: Alternate Contact Code - Unique id that is assigned to the
+            alternate contact in MMS
+          example: DFEV323455DE5S3
+        alternateContactTypeCode:
+          type: string
+          description: The type of alternate contact
+          example: RESPONSIBLE_PERSON
+        firstName:
+          type: string
+          description: The first name of the alternate contact
+          example: John
+        middleName:
+          type: string
+          description: The middle name of the alternate contact
+          example: Mosley
+        lastName:
+          type: string
+          description: The last name of the alternate contact
+          example: Doe
+        identifierTypeCode:
+          type: string
+          description: The identifier type code of the identifier
+          example: SSN
+        identifierValue:
+          type: string
+          description: The identifier of the alternate contact
+          example: 345-34-6434
+        phoneTypeCode:
+          type: string
+          description: The phone type code of the phone
+          example: MOBILE
+        phoneNumber:
+          type: string
+          description: The phone number of the member
+          example: 813-357-9150
+        email:
+          type: string
+          description: The email of the alternate contact
+          example: vbalaji215@gmail.com
+        addressLine1:
+          type: string
+          description: The address line 1 of the address
+          example: 123 Main Street
+        addressLine2:
+          type: string
+          description: The address line 2 of the address
+          example: Apt 301
+        city:
+          type: string
+          description: The city of the address
+          example: Tampa
+        stateTypeCode:
+          type: string
+          description: The state of the address
+          example: FL
+        zipCode:
+          type: string
+          description: The zipcode of the address
+          example: "33556"
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the alternate contact
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        startDate:
+          type: string
+          description: The start date of the alternate contact
+          format: date
+        endDate:
+          type: string
+          description: The end date of the alternate contact
+          format: date
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the alternate contact was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the address was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the address was updated
+          format: date-time
+      description: The list of alternate contacts associated with the member
+    BrokerDto:
+      required:
+      - brokerCode
+      - brokerId
+      - brokerName
+      - changed
+      - source
+      - startDate
+      type: object
+      properties:
+        brokerSK:
+          type: string
+          description: Broker SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        accountSK:
+          type: string
+          description: Account SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        brokerCode:
+          type: string
+          description: Broker Code - Unique id that is assigned to the broker in MMS
+          example: DFEV323455DE5S3
+        brokerName:
+          type: string
+          description: The name of the broker
+          example: John Doe
+        brokerId:
+          type: string
+          description: The id of the broker
+          example: 923-53-6234
+        agencyName:
+          type: string
+          description: The name of the agency
+          example: Broker Inc
+        agencyId:
+          type: string
+          description: The id of the agency
+          example: 923-53-6234
+        accountNumber1:
+          type: string
+          description: The account number 1 of the broker
+          example: "23452345562"
+        accountNumber2:
+          type: string
+          description: The account number 2 of the broker
+          example: "23452345562"
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the broker
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        startDate:
+          type: string
+          description: Start date of the broker
+          format: date
+        endDate:
+          type: string
+          description: End date of the broker
+          format: date
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the broker was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the account was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the account was updated
+          format: date-time
+    EnrollmentSpanDto:
+      required:
+      - businessUnitTypeCode
+      - changed
+      - coverageTypeCode
+      - endDate
+      - enrollmentType
+      - groupPolicyId
+      - marketplaceTypeCode
+      - planId
+      - productTypeCode
+      - source
+      - startDate
+      - stateTypeCode
+      - statusTypeCode
+      type: object
+      properties:
+        enrollmentSpanSK:
+          type: string
+          description: Enrollment Span SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        accountSK:
+          type: string
+          description: Account SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        enrollmentSpanCode:
+          type: string
+          description: Enrollment Span Code - Unique id that is assigned to the enrollment
+            span in MMS
+          example: DFEV323455DE5S3
+        stateTypeCode:
+          type: string
+          description: State associated with the enrollment span
+          example: FL
+        marketplaceTypeCode:
+          type: string
+          description: Marketplace associated with the enrollment span
+          example: FFM
+        businessUnitTypeCode:
+          type: string
+          description: Business unit associated with the enrollment span
+          example: FL_BU
+        enrollmentType:
+          type: string
+          description: The enrollment type of the enrollment span
+          example: PASSIVE
+        startDate:
+          type: string
+          description: Start date associated with the enrollment span
+          format: date
+        endDate:
+          type: string
+          description: End date associated with the enrollment span
+          format: date
+        exchangeSubscriberId:
+          type: string
+          description: The exchange subscriber id associated with the enrollment span
+          example: "5236346"
+        effectuationDate:
+          type: string
+          description: Effectuation date associated with the enrollment span
+          format: date
+        planId:
+          type: string
+          description: Plan Id associated with the enrollment span
+          example: 52345FL424525235
+        groupPolicyId:
+          type: string
+          description: Group policy id associated with the enrollment span
+          example: "523452345"
+        productTypeCode:
+          type: string
+          description: Product type code of the plan
+          example: HMO
+        coverageTypeCode:
+          type: string
+          description: The type of coverage
+          example: "true"
+        delinqInd:
+          type: boolean
+          description: Identifies if the enrollment span is delinquent or not
+          example: true
+        paidThroughDate:
+          type: string
+          description: Paid through date associated with the enrollment span
+          format: date
+        claimPaidThroughDate:
+          type: string
+          description: Claim Paid through date associated with the enrollment span
+          format: date
+        statusTypeCode:
+          type: string
+          description: Status of the enrollment span
+          example: ENROLLED
+        effectiveReason:
+          type: string
+          description: Effective Reason of the enrollment span
+          example: MBS
+        termReason:
+          type: string
+          description: Term Reason of the enrollment span
+          example: VW
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the enrollment span
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the enrollment span was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the enrollment span was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the enrollment span was updated
+          format: date-time
+        premiumSpans:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/PremiumSpanDto"
+        premiumPayments:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/PremiumPaymentDto"
+    MemberAddressDto:
+      required:
+      - addressLine1
+      - addressLine2
+      - addressTypeCode
+      - changed
+      - city
+      - fipsCode
+      - memberAddressCode
+      - source
+      - startDate
+      - stateTypeCode
+      - zipCode
+      type: object
+      properties:
+        memberAddressSK:
+          type: string
+          description: Member Address SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberAddressCode:
+          type: string
+          description: Member Address Code - Unique id that is assigned to the member
+            address in MMS
+          example: DFEV323455DE5S3
+        addressTypeCode:
+          type: string
+          description: The type of the address
+          example: Residential
+        addressLine1:
+          type: string
+          description: The address line 1 of the address
+          example: 123 Main Street
+        addressLine2:
+          type: string
+          description: The address line 2 of the address
+          example: Apt 301
+        city:
+          type: string
+          description: The city of the address
+          example: Tampa
+        stateTypeCode:
+          type: string
+          description: The state of the address
+          example: FL
+        zipCode:
+          type: string
+          description: The zipcode of the address
+          example: "33556"
+        fipsCode:
+          type: string
+          description: The fips code of the address
+          example: "12003"
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the address
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        startDate:
+          type: string
+          description: The start date of the address
+          format: date
+        endDate:
+          type: string
+          description: The end date of the address
+          format: date
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the address was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the address was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the address was updated
+          format: date-time
+      description: The list of member addresses associated with the member
+    MemberAttributeDto:
+      required:
+      - attributeSK
+      - attributeValue
+      - changed
+      - source
+      type: object
+      properties:
+        memberAttributeSK:
+          type: string
+          description: Member Attribute SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        attributeSK:
+          type: string
+          description: Attribute SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        attributeValue:
+          type: string
+          description: The value of the attribute
+          example: FFM-FL
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the attribute was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the attribute was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the attribute was updated
+          format: date-time
+      description: The list of member attributes associated with the member
+    MemberDto:
+      required:
+      - changed
+      - dateOfBirth
+      - firstName
+      - genderTypeCode
+      - lastName
+      - memberCode
+      - relationshipTypeCode
+      - source
+      type: object
+      properties:
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        accountSK:
+          type: string
+          description: Account SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberCode:
+          type: string
+          description: A unique member code
+          example: SDG3543SDFG23GF
+        firstName:
+          type: string
+          description: The first name of the member
+          example: John
+        middleName:
+          type: string
+          description: The middle name of the member
+          example: Mosley
+        lastName:
+          type: string
+          description: The last name of the member
+          example: Doe
+        relationshipTypeCode:
+          type: string
+          description: The relationship of the member with the head of the household
+          example: HOH
+        dateOfBirth:
+          type: string
+          description: The date of birth of the member
+          format: date
+        genderTypeCode:
+          type: string
+          description: The gender of the member
+          example: MALE
+        height:
+          type: number
+          description: The height of the member
+          format: double
+          example: 5.6
+        weight:
+          type: number
+          description: The weight of the member in pounds
+          format: double
+          example: 65.6
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the member
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the member was updated
+          example: false
+        memberAttributes:
+          uniqueItems: true
+          type: array
+          description: The list of member attributes associated with the member
+          items:
+            $ref: "#/components/schemas/MemberAttributeDto"
+        memberAddresses:
+          uniqueItems: true
+          type: array
+          description: The list of member addresses associated with the member
+          items:
+            $ref: "#/components/schemas/MemberAddressDto"
+        memberIdentifiers:
+          uniqueItems: true
+          type: array
+          description: The list of member identifiers associated with the member
+          items:
+            $ref: "#/components/schemas/MemberIdentifierDto"
+        memberLanguages:
+          uniqueItems: true
+          type: array
+          description: The list of member languages associated with the member
+          items:
+            $ref: "#/components/schemas/MemberLanguageDto"
+        memberPhones:
+          uniqueItems: true
+          type: array
+          description: The list of member phone numbers associated with the member
+          items:
+            $ref: "#/components/schemas/MemberPhoneDto"
+        memberEmails:
+          uniqueItems: true
+          type: array
+          description: The list of member emails associated with the member
+          items:
+            $ref: "#/components/schemas/MemberEmailDto"
+        alternateContacts:
+          uniqueItems: true
+          type: array
+          description: The list of alternate contacts associated with the member
+          items:
+            $ref: "#/components/schemas/AlternateContactDto"
+        memberPremiums:
+          uniqueItems: true
+          type: array
+          description: The list of premiums associated with the member
+          items:
+            $ref: "#/components/schemas/MemberPremiumDto"
+        createdDate:
+          type: string
+          description: The date when the member was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the member was updated
+          format: date-time
+    MemberEmailDto:
+      required:
+      - changed
+      - email
+      - emailTypeCode
+      - isPrimary
+      - memberEmailCode
+      - primary
+      - source
+      - startDate
+      type: object
+      properties:
+        memberEmailSK:
+          type: string
+          description: Member Email SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberEmailCode:
+          type: string
+          description: Member Email Code - Unique id that is assigned to the member
+            email in MMS
+          example: DFEV323455DE5S3
+        emailTypeCode:
+          type: string
+          description: The email type code of the email
+          example: PERSONAL
+        email:
+          type: string
+          description: The email of the member
+          example: vbalaji215@gmail.com
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        isPrimary:
+          type: boolean
+          description: Identifies if the email is the primary email
+          example: true
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the email
+          example: SDFG43456DFG23G
+        startDate:
+          type: string
+          description: The start date of the email
+          format: date
+        endDate:
+          type: string
+          description: The end date of the email
+          format: date
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the email was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the email was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the email was updated
+          format: date-time
+        primary:
+          type: boolean
+      description: The list of member emails associated with the member
+    MemberIdentifierDto:
+      required:
+      - active
+      - changed
+      - identifierTypeCode
+      - identifierValue
+      - isActive
+      - memberIdentifierCode
+      - source
+      type: object
+      properties:
+        memberIdentifierSK:
+          type: string
+          description: Member Identifier SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberIdentifierCode:
+          type: string
+          description: Member Address Code - Unique id that is assigned to the member
+            address in MMS
+          example: DFEV323455DE5S3
+        identifierTypeCode:
+          type: string
+          description: The identifier type code of the identifier
+          example: SSN
+        identifierValue:
+          type: string
+          description: The identifier of the member
+          example: 345-34-6434
+        isActive:
+          type: boolean
+          description: Identifies if the identifier is active
+          example: true
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the identifier
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the identifier was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the identifier was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the identifier was updated
+          format: date-time
+        active:
+          type: boolean
+      description: The list of member identifiers associated with the member
+    MemberLanguageDto:
+      required:
+      - changed
+      - endDate
+      - languageCode
+      - languageTypeCode
+      - memberLanguageCode
+      - source
+      - startDate
+      type: object
+      properties:
+        memberLanguageSK:
+          type: string
+          description: Member Language SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberLanguageCode:
+          type: string
+          description: Member Language Code - Unique id that is assigned to the member
+            address in MMS
+          example: DFEV323455DE5S3
+        languageTypeCode:
+          type: string
+          description: The language type code of the language
+          example: SPOKEN
+        languageCode:
+          type: string
+          description: The language of the member
+          example: ENG
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the language
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        startDate:
+          type: string
+          description: The start date of the language
+          format: date
+        endDate:
+          type: string
+          description: The end date of the language
+          format: date
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the language was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the language was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the language was updated
+          format: date-time
+      description: The list of member languages associated with the member
+    MemberPhoneDto:
+      required:
+      - changed
+      - memberPhoneCode
+      - phoneNumber
+      - phoneTypeCode
+      - source
+      - startDate
+      type: object
+      properties:
+        memberPhoneSK:
+          type: string
+          description: Member Phone SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberPhoneCode:
+          type: string
+          description: Member Phone Code - Unique id that is assigned to the member
+            phone in MMS
+          example: DFEV323455DE5S3
+        phoneTypeCode:
+          type: string
+          description: The phone type code of the phone
+          example: MOBILE
+        phoneNumber:
+          type: string
+          description: The phone number of the member
+          example: 813-357-9150
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the phone number
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        startDate:
+          type: string
+          description: The start date of the phone
+          format: date
+        endDate:
+          type: string
+          description: The end date of the phone
+          format: date
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the phone was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the phone number was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the phone number was updated
+          format: date-time
+      description: The list of member phone numbers associated with the member
+    MemberPremiumDto:
+      required:
+      - exchangeMemberId
+      - individualPremiumAmount
+      - memberCode
+      type: object
+      properties:
+        memberPremiumSK:
+          type: string
+          description: Member Premium Span SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        memberCode:
+          type: string
+          description: A unique member code
+          example: SDG3543SDFG23GF
+        memberSK:
+          type: string
+          description: Member SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        exchangeMemberId:
+          type: string
+          description: The exchange member id of the member
+          example: "2323452"
+        individualPremiumAmount:
+          type: number
+          description: The premium amount for the respective member
+          example: 150.0
+        createdDate:
+          type: string
+          description: The date when the premium span was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the premium span was updated
+          format: date-time
+      description: The list of premiums associated with the member
+    PayerDto:
+      required:
+      - changed
+      - payerCode
+      - payerId
+      - payerName
+      - source
+      - startDate
+      type: object
+      properties:
+        payerSK:
+          type: string
+          description: Payer SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        accountSK:
+          type: string
+          description: Account SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        payerCode:
+          type: string
+          description: Payer Code - Unique id that is assigned to the payer in MMS
+          example: DFEV323455DE5S3
+        payerName:
+          type: string
+          description: The name of the payer
+          example: John Doe
+        payerId:
+          type: string
+          description: The id of the payer
+          example: 923-53-6234
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the payer
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        startDate:
+          type: string
+          description: Start date of the payer
+          format: date
+        endDate:
+          type: string
+          description: End date of the payer
+          format: date
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the payer was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the account was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the account was updated
+          format: date-time
+    PremiumSpanDto:
+      required:
+      - changed
+      - csrVariant
+      - endDate
+      - memberPremiumSpans
+      - premiumSpanCode
+      - sequence
+      - source
+      - startDate
+      - statusTypeCode
+      - totalPremiumAmount
+      - totalResponsibleAmount
+      - ztcn
+      type: object
+      properties:
+        premiumSpanSK:
+          type: string
+          description: Premium Span SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        enrollmentSpanSK:
+          type: string
+          description: Enrollment Span SK - This is a UUID value
+          format: uuid
+          readOnly: true
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        sequence:
+          type: integer
+          description: The sequence in which the premium span is created
+          format: int32
+          example: 1
+        premiumSpanCode:
+          type: string
+          description: Premium Span Code - Unique id that is assigned to the premium
+            span in MMS
+          example: DFEV323455DE5S3
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the premium span
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        startDate:
+          type: string
+          description: The start date of the premium span
+          format: date
+        endDate:
+          type: string
+          description: The end date of the premium span
+          format: date
+        statusTypeCode:
+          type: string
+          description: Status of the premim span
+          example: ACTIVE
+        csrVariant:
+          type: string
+          description: The CSR Variant of the premium span
+          example: "01"
+        totalPremiumAmount:
+          type: number
+          description: The total premium amount period of the premium span
+          example: 150.0
+        totalResponsibleAmount:
+          type: number
+          description: The total responsible amount period of the premium span
+          example: 150.0
+        aptcAmount:
+          type: number
+          description: The APTC amount period of the premium span
+          example: 150.0
+        otherPayAmount:
+          type: number
+          description: The other pay amount period of the premium span
+          example: 150.0
+        csrAmount:
+          type: number
+          description: The CSR amount period of the premium span
+          example: 150.0
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the premium span was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the premium span was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the premium span was updated
+          format: date-time
+        memberPremiumSpans:
+          uniqueItems: true
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberPremiumDto"
+    SponsorDto:
+      required:
+      - changed
+      - source
+      - sponsorCode
+      - sponsorId
+      - sponsorName
+      - startDate
+      type: object
+      properties:
+        sponsorSK:
+          type: string
+          description: Sponsor SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        sponsorCode:
+          type: string
+          description: Sponsor Code - Unique id that is assigned to the sponsor in
+            MMS
+          example: DFEV323455DE5S3
+        accountSK:
+          type: string
+          description: Account SK - This is a UUID value
+          format: uuid
+          example: 657cfd75-634e-49f1-9556-4d79f79848ec
+        sponsorId:
+          type: string
+          description: The id of the sponsor
+          example: 923-53-6234
+        sponsorName:
+          type: string
+          description: The name of the sponsor
+          example: John Doe
+        ztcn:
+          type: string
+          description: The zeus transaction control number of the transaction that
+            created the account
+          example: SDFG43456DFG23G
+        source:
+          type: string
+          description: The source of the data
+          example: MARKETPLACE
+        startDate:
+          type: string
+          description: Start date of the sponsor
+          format: date
+        endDate:
+          type: string
+          description: End date of the sponsor
+          format: date
+        changed:
+          type: object
+          properties:
+            opaque:
+              type: boolean
+            acquire:
+              type: boolean
+            release:
+              type: boolean
+              writeOnly: true
+            plain:
+              type: boolean
+          description: Identifies if the sponsor was updated
+          example: false
+        createdDate:
+          type: string
+          description: The date when the account was created
+          format: date-time
+        updatedDate:
+          type: string
+          description: The date when the account was updated
+          format: date-time
     WelcomeDto:
       type: object
       properties:
         welcomeMessage:
           type: string
+    ZeusApiResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        statusCode:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum:
+          - 100 CONTINUE
+          - 101 SWITCHING_PROTOCOLS
+          - 102 PROCESSING
+          - 103 EARLY_HINTS
+          - 103 CHECKPOINT
+          - 200 OK
+          - 201 CREATED
+          - 202 ACCEPTED
+          - 203 NON_AUTHORITATIVE_INFORMATION
+          - 204 NO_CONTENT
+          - 205 RESET_CONTENT
+          - 206 PARTIAL_CONTENT
+          - 207 MULTI_STATUS
+          - 208 ALREADY_REPORTED
+          - 226 IM_USED
+          - 300 MULTIPLE_CHOICES
+          - 301 MOVED_PERMANENTLY
+          - 302 FOUND
+          - 302 MOVED_TEMPORARILY
+          - 303 SEE_OTHER
+          - 304 NOT_MODIFIED
+          - 305 USE_PROXY
+          - 307 TEMPORARY_REDIRECT
+          - 308 PERMANENT_REDIRECT
+          - 400 BAD_REQUEST
+          - 401 UNAUTHORIZED
+          - 402 PAYMENT_REQUIRED
+          - 403 FORBIDDEN
+          - 404 NOT_FOUND
+          - 405 METHOD_NOT_ALLOWED
+          - 406 NOT_ACCEPTABLE
+          - 407 PROXY_AUTHENTICATION_REQUIRED
+          - 408 REQUEST_TIMEOUT
+          - 409 CONFLICT
+          - 410 GONE
+          - 411 LENGTH_REQUIRED
+          - 412 PRECONDITION_FAILED
+          - 413 PAYLOAD_TOO_LARGE
+          - 413 REQUEST_ENTITY_TOO_LARGE
+          - 414 URI_TOO_LONG
+          - 414 REQUEST_URI_TOO_LONG
+          - 415 UNSUPPORTED_MEDIA_TYPE
+          - 416 REQUESTED_RANGE_NOT_SATISFIABLE
+          - 417 EXPECTATION_FAILED
+          - 418 I_AM_A_TEAPOT
+          - 419 INSUFFICIENT_SPACE_ON_RESOURCE
+          - 420 METHOD_FAILURE
+          - 421 DESTINATION_LOCKED
+          - 422 UNPROCESSABLE_ENTITY
+          - 423 LOCKED
+          - 424 FAILED_DEPENDENCY
+          - 425 TOO_EARLY
+          - 426 UPGRADE_REQUIRED
+          - 428 PRECONDITION_REQUIRED
+          - 429 TOO_MANY_REQUESTS
+          - 431 REQUEST_HEADER_FIELDS_TOO_LARGE
+          - 451 UNAVAILABLE_FOR_LEGAL_REASONS
+          - 500 INTERNAL_SERVER_ERROR
+          - 501 NOT_IMPLEMENTED
+          - 502 BAD_GATEWAY
+          - 503 SERVICE_UNAVAILABLE
+          - 504 GATEWAY_TIMEOUT
+          - 505 HTTP_VERSION_NOT_SUPPORTED
+          - 506 VARIANT_ALSO_NEGOTIATES
+          - 507 INSUFFICIENT_STORAGE
+          - 508 LOOP_DETECTED
+          - 509 BANDWIDTH_LIMIT_EXCEEDED
+          - 510 NOT_EXTENDED
+          - 511 NETWORK_AUTHENTICATION_REQUIRED
+        reason:
+          type: string
+        message:
+          type: string
+        developerMessage:
+          type: string
+        response:
+          type: object

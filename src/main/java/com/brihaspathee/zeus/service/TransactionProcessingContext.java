@@ -1,6 +1,9 @@
 package com.brihaspathee.zeus.service;
 
+import com.brihaspathee.zeus.domain.entity.EnrollmentSpan;
 import lombok.*;
+
+import java.util.UUID;
 
 /**
  * Created in Intellij IDEA
@@ -19,8 +22,34 @@ import lombok.*;
 public class TransactionProcessingContext {
 
     /**
+     * The account for which the transaction is being processed
+     */
+    private String accountNumber;
+
+    /**
+     * The primary key of the account in PB for which the transaction is processed
+     */
+    private UUID accountSK;
+
+    /**
      * Boolean indicator that indicates if an update regarding the enrollment span should be
      * sent to MMS or not
      */
     private boolean sendUpdateToMMS;
+
+    /**
+     * Boolean indicator that indicates if an existing enrollment span is being canceled
+     */
+    private boolean isESGettingCanceled;
+
+    /**
+     * Boolean indicator that indicates if an existing enrollment span is being termed
+     */
+    private boolean isESGettingTermed;
+
+    /**
+     * The enrollment span that is immediately next to the enrollment span that is being updated
+     * This enrollment span may need to be updated if the current enrollment span is being termed or canceled
+     */
+    private EnrollmentSpan nextEnrollmentSpan;
 }
