@@ -62,7 +62,10 @@ public class AccountServiceImpl implements AccountService {
         if(optional.isPresent()){
             // perform updates on the account
             if(accountDto.getEnrollmentSpans() !=null){
-                enrollmentSpanHelper.updateEnrollmentSpan(context, optional.get(),
+                Account account = optional.get();
+                context.setAccountSK(account.getAccountSK());
+                context.setAccountNumber(account.getAccountNumber());
+                enrollmentSpanHelper.updateEnrollmentSpan(context, account,
                         accountDto.getEnrollmentSpans().stream().toList());
             }
         }else{
