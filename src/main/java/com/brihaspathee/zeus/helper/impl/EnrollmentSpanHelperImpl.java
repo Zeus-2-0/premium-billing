@@ -171,12 +171,15 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
             enrollmentSpan.setStatusTypeCode(status);
             enrollmentSpan.setEffectuationDate(effectuationDate);
             enrollmentSpan = enrollmentSpanRepository.save(enrollmentSpan);
-            memberManagementService.updateEnrollmentSpan(EnrollmentSpanDto.builder()
+            EnrollmentSpanList enrollmentSpanList = EnrollmentSpanList.builder()
+                    .enrollmentSpans(List.of(EnrollmentSpanDto.builder()
                             .enrollmentSpanCode(enrollmentSpan.getEnrollmentSpanCode())
                             .effectuationDate(enrollmentSpan.getEffectuationDate())
                             .paidThroughDate(enrollmentSpan.getPaidThroughDate())
                             .statusTypeCode(enrollmentSpan.getStatusTypeCode())
-                    .build());
+                            .build()))
+                    .build();
+            memberManagementService.updateEnrollmentSpan(enrollmentSpanList);
         }
     }
 
@@ -478,7 +481,8 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                     nextEnrollmentSpan.setEffectuationDate(null);
                     nextEnrollmentSpan.setPaidThroughDate(null);
                     nextEnrollmentSpan.setClaimPaidThroughDate(null);
-                    enrollmentSpanRepository.save(nextEnrollmentSpan);
+                    nextEnrollmentSpan = enrollmentSpanRepository.save(nextEnrollmentSpan);
+                    context.setNextESReset(true);
                 }
             }
         }else{
@@ -500,7 +504,21 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                     .paidThroughDate(enrollmentSpanDto.getPaidThroughDate())
                     .claimPaidThroughDate(enrollmentSpanDto.getClaimPaidThroughDate())
                     .build();
-            memberManagementService.updateEnrollmentSpan(updatedEnrollmentSpan);
+            EnrollmentSpanList enrollmentSpanList = EnrollmentSpanList.builder()
+                    .enrollmentSpans(List.of(updatedEnrollmentSpan))
+                    .build();
+            if(context.isNextESReset()){
+                EnrollmentSpanDto nextEnrollmentSpan = EnrollmentSpanDto.builder()
+                        .enrollmentSpanCode(context.getNextEnrollmentSpan().getEnrollmentSpanCode())
+                        .statusTypeCode(context.getNextEnrollmentSpan().getStatusTypeCode())
+                        .effectuationDate(context.getNextEnrollmentSpan().getEffectuationDate())
+                        .paidThroughDate(context.getNextEnrollmentSpan().getPaidThroughDate())
+                        .claimPaidThroughDate(context.getNextEnrollmentSpan().getClaimPaidThroughDate())
+                        .build();
+                enrollmentSpanList.getEnrollmentSpans().add(nextEnrollmentSpan);
+            }
+
+            memberManagementService.updateEnrollmentSpan(enrollmentSpanList);
         }
     }
 

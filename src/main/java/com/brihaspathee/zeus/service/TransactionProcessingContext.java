@@ -54,6 +54,11 @@ public class TransactionProcessingContext {
     private EnrollmentSpan nextEnrollmentSpan;
 
     /**
+     * Indicates if the next enrollment span was reset
+     */
+    private boolean isNextESReset;
+
+    /**
      * to String method
      * @return
      */
@@ -66,6 +71,7 @@ public class TransactionProcessingContext {
                 ", isESGettingCanceled=" + isESGettingCanceled +
                 ", isESGettingTermed=" + isESGettingTermed +
                 ", nextEnrollmentSpan=" + nextEnrollmentSpan +
+                ", isNextESReset=" + isNextESReset +
                 '}';
     }
 }

@@ -1,6 +1,7 @@
 package com.brihaspathee.zeus.service.interfaces;
 
 import com.brihaspathee.zeus.dto.account.EnrollmentSpanDto;
+import com.brihaspathee.zeus.dto.account.EnrollmentSpanList;
 
 /**
  * Created in Intellij IDEA
@@ -15,7 +16,7 @@ public interface MemberManagementService {
 
     /**
      * Send member management service the enrollment span that needs to be updated
-     * @param enrollmentSpanDto
+     * @param enrollmentSpanList - The list of enrollment spans that needs to be updated
      */
-    void updateEnrollmentSpan(EnrollmentSpanDto enrollmentSpanDto);
+    void updateEnrollmentSpan(EnrollmentSpanList enrollmentSpanList);
 }

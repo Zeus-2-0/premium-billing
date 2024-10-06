@@ -1,6 +1,7 @@
 package com.brihaspathee.zeus.service.impl;
 
 import com.brihaspathee.zeus.dto.account.EnrollmentSpanDto;
+import com.brihaspathee.zeus.dto.account.EnrollmentSpanList;
 import com.brihaspathee.zeus.dto.transaction.FileDetailDto;
 import com.brihaspathee.zeus.service.interfaces.MemberManagementService;
 import com.brihaspathee.zeus.web.response.ZeusApiResponse;
@@ -39,15 +40,15 @@ public class MemberManagementServiceImpl implements MemberManagementService {
 
     /**
      * Update member management service with the enrollment span updates
-     * @param enrollmentSpanDto
+     * @param enrollmentSpanList - The list of enrollment spans that needs to be udpated
      */
     @Override
-    public void updateEnrollmentSpan(EnrollmentSpanDto enrollmentSpanDto) {
-        log.info("Updating enrollment span:{}", enrollmentSpanDto);
+    public void updateEnrollmentSpan(EnrollmentSpanList enrollmentSpanList) {
+        log.info("Updating enrollment span:{}", enrollmentSpanList);
         String uri = memberMgmtHost + "zeus/account/enrollmentSpan/update";
         Mono<ZeusApiResponse<String>> responseMono = webClient.post()
                 .uri(uri)
-                .body(Mono.just(enrollmentSpanDto), EnrollmentSpanDto.class)
+                .body(Mono.just(enrollmentSpanList), EnrollmentSpanList.class)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<ZeusApiResponse<String>>() {});
         responseMono.doOnError(exception -> {
