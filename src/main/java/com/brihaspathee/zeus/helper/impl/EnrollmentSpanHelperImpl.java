@@ -451,58 +451,34 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                             .getPremiumSpans()
                             .stream()
                             .toList());
+            log.info("Transaction context in update enrollment span method:{}", context);
             // check if the enrollment span was termed or canceled
             if (context.isESGettingCanceled() ||
                 context.isESGettingTermed()){
                 // if it was termed or canceled, then check if the next enrollment span
                 // should be updated
-                String planId = enrollmentSpanDto.getPlanId();
-                LocalDate currentESEndDate = currentEnrollmentSpan.getEndDate();
+                log.info("Enrollment span is getting termed or canceled");
                 EnrollmentSpan nextEnrollmentSpan = context.getNextEnrollmentSpan();
-                if(nextEnrollmentSpan != null &&
-                        nextEnrollmentSpan.getPlanId().equals(planId) &&
-                        currentESEndDate.plusDays(1).isEqual(nextEnrollmentSpan.getStartDate()) &&
-                        nextEnrollmentSpan.getStatusTypeCode().equals(EnrollmentSpanStatus.ENROLLED.toString()) &&
-                        (nextEnrollmentSpan.getPremiumPayments() == null || nextEnrollmentSpan.getPremiumPayments().isEmpty())){
-                    // todo create a separate method to check if any premium payments were received and if they were enough
-                    // to cover for atleast one month coverage
-                    // if there is a subsequent enrollment span AND
-                    // if the plan id of the enrollment span that is being termed or canceled and the
-                    //     plan id of the next enrollment span are same AND
-                    // There was no gap in coverage between the two enrollment span AND
-                    // the next enrollment span is in ENROLLED status AND
-                    // there are no payments received for the enrollment span
-                    // then the control will come here
-                    // Get all the active premium spans
-                    List<PremiumSpan> premiumSpans = new ArrayList<>(nextEnrollmentSpan.getPremiumSpans()
-                            .stream()
-                            .filter(premiumSpan ->
-                                    premiumSpan.getStatusTypeCode()
-                                            .equals(PremiumSpanStatus.ACTIVE.toString()))
-                            .toList());
-                    // sort by ascending order of the start date
-                    premiumSpans.sort(Comparator.comparing(PremiumSpan::getStartDate));
-                    PremiumSpan premiumSpan = premiumSpans.getFirst();
-                    if(premiumSpan.getTotalResponsibleAmount() != null &&
-                        !premiumSpan.getTotalResponsibleAmount().equals(BigDecimal.ZERO)){
-                        // if total responsible amount is not equal to zero
-                        // If the control reaches here, it means the only reason that this enrollment span
-                        // for which the member has not made any payments or the payment is not enough to
-                        // cover one month of coverage and the total responsible amount is not zero
-                        // is in an enrolled status only because the prior enrollment span
-                        // which was being termed or canceled was in the same plan and that there was
-                        // no gap in coverage. Now that the prior enrollment span is being termed or
-                        // canceled, this enrollment span cannot be in ENROLLED status
-                        // it has to be set to PREMEMBER and the following dates have to be removed
-                        // 1. Effectuation date
-                        // 2. Paid Through date
-                        // 3. Claim Paid Through date
-                        nextEnrollmentSpan.setStatusTypeCode(EnrollmentSpanStatus.PRE_MEMBER.toString());
-                        nextEnrollmentSpan.setEffectuationDate(null);
-                        nextEnrollmentSpan.setPaidThroughDate(null);
-                        nextEnrollmentSpan.setClaimPaidThroughDate(null);
-                    }
-
+                log.info("Next Enrollment Span code:{}", nextEnrollmentSpan.getEnrollmentSpanCode());
+                log.info("Next Enrollment span status:{}", nextEnrollmentSpan.getStatusTypeCode());
+                if(resetNextEnrollmentSpanStatus(currentEnrollmentSpan, nextEnrollmentSpan)){
+                    // If the control reaches here, it means the only reason that this enrollment span
+                    // for which the member has not made any payments or the payment is not enough to
+                    // cover one month of coverage and the total responsible amount is not zero
+                    // is in an enrolled status only because the prior enrollment span
+                    // which was being termed or canceled was in the same plan and that there was
+                    // no gap in coverage. Now that the prior enrollment span is being termed or
+                    // canceled, this enrollment span cannot be in ENROLLED status
+                    // it has to be set to PREMEMBER and the following dates have to be removed
+                    // 1. Effectuation date
+                    // 2. Paid Through date
+                    // 3. Claim Paid Through date
+                    log.info("There are conditions to reset the next enrollment span");
+                    nextEnrollmentSpan.setStatusTypeCode(EnrollmentSpanStatus.PRE_MEMBER.toString());
+                    nextEnrollmentSpan.setEffectuationDate(null);
+                    nextEnrollmentSpan.setPaidThroughDate(null);
+                    nextEnrollmentSpan.setClaimPaidThroughDate(null);
+                    enrollmentSpanRepository.save(nextEnrollmentSpan);
                 }
             }
         }else{
@@ -526,6 +502,123 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                     .build();
             memberManagementService.updateEnrollmentSpan(updatedEnrollmentSpan);
         }
+    }
+
+    /**
+     * Checks to see if the enrollment span needs to be reset
+     * @param currentEnrollmentSpan
+     * @param nextEnrollmentSpan
+     * @return
+     */
+    private boolean resetNextEnrollmentSpanStatus(EnrollmentSpan currentEnrollmentSpan,
+                                            EnrollmentSpan nextEnrollmentSpan){
+        if(nextEnrollmentSpan == null){
+            // there is no enrollment span to reset
+            log.info("There is no enrollment span to reset status");
+            return false;
+        }
+        if(!nextEnrollmentSpan.getStatusTypeCode().equals(EnrollmentSpanStatus.ENROLLED.toString())){
+            // the next enrollment span is not in ENROLLED status
+            // hence no reset is required
+            log.info("The next enrollment span is not in enrolled status");
+            return false;
+        }
+        String currentPlanId = currentEnrollmentSpan.getPlanId();
+        String nextPlanId = nextEnrollmentSpan.getPlanId();
+        if(!currentPlanId.equals(nextPlanId)){
+            // the plan ids of the current and the next enrollment span are different
+            // hence no reset is required
+            log.info("The plan ids of the current and the next enrollment span are different");
+            return false;
+        }
+        LocalDate currentESEndDate = currentEnrollmentSpan.getEndDate();
+        LocalDate nextESStartDate = nextEnrollmentSpan.getStartDate();
+        if(!currentESEndDate.plusDays(1).isEqual(nextESStartDate)){
+            // there was gap in coverage between the two enrollment spans
+            // even before the current enrollment span was termed or canceled
+            log.info("There was gap in coverage between the two enrollment spans");
+            return false;
+        }
+        if(checkForPayments(nextEnrollmentSpan)){
+            // this means that one of the following is true
+            // The total responsibility amount of the next enrollment span is zero
+            // The total responsibility amount is greater than zero but the member has made enough payments to
+            // cover at least one month of coverage
+
+            // If one of the above is true then no reset of the span is required
+            log.info("There are enough payments or no payments necessary");
+            return false;
+        }
+        // If all of the above conditions fail then it means that the next enrollment span was set to
+        // ENROLLED status only because the prior enrollment span had the same plan and there was
+        // no gap in coverage between the two spans
+        // Hence return the value to TRUE to indicate that the next enrollment span status should be reset
+        log.info("About to return TRUE to reset the enrollment span");
+        return true;
+    }
+
+    /**
+     * This method should check to see if there are any payments made for the enrollment span
+     * If the total responsible amount is zero for the first month then it will return true
+     * If there are no payments made then it will return false
+     * If there are payments made but is not enough to cover the first month of coverage then return false
+     * If there are payments made and it is enough to cover first month of coverage then return true
+     * @param enrollmentSpan
+     * @return
+     */
+    private boolean checkForPayments(EnrollmentSpan enrollmentSpan){
+        // First check if the member has to make any payments at all
+        // If the total responsible amount is zero then no payment is necessary
+        List<PremiumSpan> premiumSpans = getNonCanceledPremiumSpans(enrollmentSpan);
+        if(premiumSpans.isEmpty()){
+            // this should not happen
+            log.info("There are no active premium spans associated with the enrollment span." +
+                    "This should not have happened, check the code for logic error");
+            return false;
+        }
+        PremiumSpan premiumSpan = premiumSpans.getFirst();
+        BigDecimal totResAmt = premiumSpan.getTotalResponsibleAmount();
+        if(totResAmt.compareTo(BigDecimal.ZERO) == 0){
+            // There is no payment necessary because the total responsible amount is zero
+            return true;
+        }
+        // If the control reaches here, then it means that the total responsible amount for the
+        // first month coverage is greater than zero
+        // So, check if there are any payment received from the member.
+        if(enrollmentSpan.getPremiumPayments() == null || enrollmentSpan.getPremiumPayments().isEmpty()){
+            // No payments received for the enrollment span hence returning false
+            return false;
+        }
+
+        BigDecimal sumOFPayments = enrollmentSpan.getPremiumPayments()
+                .stream()
+                .map(PremiumPayment::getPremiumPayment)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // the payments are enough to cover at least one month of coverage
+        // Compare to method returns
+        // -1 if the payments made is less than the total responsible amount
+        // 0 if the payments made is equal than the total responsible amount
+        // 1 if the payments made is greater than the total responsible amount
+        // the method will return false of the payments made is less than the total responsible amount
+        // the method will return true of the payments made is equal to or greater than the total responsible amount
+        return sumOFPayments.compareTo(totResAmt) > 0;
+    }
+
+    /**
+     * Returns the list of non-canceled premium spans associated with the enrollment span
+     * @param enrollmentSpan
+     * @return
+     */
+    private List<PremiumSpan> getNonCanceledPremiumSpans(EnrollmentSpan enrollmentSpan){
+        List<PremiumSpan> premiumSpans = new ArrayList<>(enrollmentSpan.getPremiumSpans()
+                .stream()
+                .filter(premiumSpan ->
+                        premiumSpan.getStatusTypeCode()
+                                .equals(PremiumSpanStatus.ACTIVE.toString()))
+                .toList());
+        // sort by ascending order of the start date
+        premiumSpans.sort(Comparator.comparing(PremiumSpan::getStartDate));
+        return premiumSpans;
     }
 
     /**
@@ -556,6 +649,7 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
             }
         }else{
             // Check if the enrollment span is being termed or canceled
+            log.info("Check to see if the enrollment span is being termed or canceled");
             checkForTermOrCancel(context, account, currentEnrollmentSpan, enrollmentSpanDto);
             // the enrollment span is not new
             LocalDate currentPaidThruDate = currentEnrollmentSpan.getPaidThroughDate();
@@ -627,24 +721,30 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
         String currentEnrollmentSpanStatus = currentEnrollmentSpan.getStatusTypeCode();
         String spanStatus = enrollmentSpanDto.getStatusTypeCode();
         if(spanStatus.equals(currentEnrollmentSpanStatus)){
-            // if the status are different check if the end date is being updated
+            // if the status is the same check if the end date is being updated
             // which will indicate that the span is being termed
+            log.info("Enrollment spans have the same status");
             LocalDate spanEndDate = enrollmentSpanDto.getEndDate();
             LocalDate currentEndDate = currentEnrollmentSpan.getEndDate();
             if(!spanEndDate.isEqual(currentEndDate)){
                 // the end dates are different
+                log.info("Enrollment spans end dates is being updated, which means it is being termed");
                 context.setESGettingTermed(true);
             }
         }else{
             if(spanStatus.equals(EnrollmentSpanStatus.CANCELED.toString())){
+                log.info("Enrollment span is being canceled");
                 context.setESGettingCanceled(true);
             }
         }
+        log.info("Transaction Context:{}", context);
         // if the enrollment span is being termed or canceled
         // get the next immediate enrollment span and store it in the context
         if(context.isESGettingTermed() ||
         context.isESGettingCanceled()){
+            log.info("Since the enrollment span is being termed or canceled, get the next available enrollment span for the account");
             EnrollmentSpan enrollmentSpan = getNextEnrollmentSpan(account, currentEnrollmentSpan.getEndDate());
+            log.info("The next available enrollment span for the account: {}", enrollmentSpan);
             context.setNextEnrollmentSpan(enrollmentSpan);
         }
     }
@@ -744,26 +844,34 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
      * @return
      */
     private EnrollmentSpan getNextEnrollmentSpan(Account account, LocalDate effectiveDate){
+        log.info("The effective date received as input:{}", effectiveDate);
         List<EnrollmentSpan> enrollmentSpans = enrollmentSpanRepository.findEnrollmentSpanByAccount_AccountNumber(
                 account.getAccountNumber());
+        log.info("Enrollment spans in the account:{}", enrollmentSpans);
         enrollmentSpans =
                 enrollmentSpans.stream()
                         .sorted(Comparator.comparing(EnrollmentSpan::getStartDate))
                         .collect(Collectors.toList());
+        log.info("Enrollment spans in the account sorted by start date:{}", enrollmentSpans);
         enrollmentSpans =
                 enrollmentSpans.stream()
-                        .takeWhile(
+                        .filter(
                                 enrollmentSpanDto ->
                                         enrollmentSpanDto.getEndDate().isAfter(effectiveDate))
                         .collect(Collectors.toList());
+        log.info("Enrollment spans that are after the effective date:{}", enrollmentSpans);
         enrollmentSpans = enrollmentSpans.stream()
                 .filter(
                         enrollmentSpan1 ->
                                 !enrollmentSpan1.getStatusTypeCode()
                                         .equals(EnrollmentSpanStatus.CANCELED.toString()))
                 .collect(Collectors.toList());
+        log.info("Enrollment spans that are after the effective date and are not canceled:{}", enrollmentSpans);
+        log.info("Is the enrollment spans list empty:{}", enrollmentSpans.isEmpty());
         if(!enrollmentSpans.isEmpty()){
-            return enrollmentSpans.getFirst();
+            EnrollmentSpan enrollmentSpan = enrollmentSpans.getFirst();
+            log.info("The next enrollment span is:{}", enrollmentSpan.getEnrollmentSpanCode());
+            return enrollmentSpan;
         }else {
             return null;
         }
