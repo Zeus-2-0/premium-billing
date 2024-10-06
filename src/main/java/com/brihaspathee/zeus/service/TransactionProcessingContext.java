@@ -52,4 +52,20 @@ public class TransactionProcessingContext {
      * This enrollment span may need to be updated if the current enrollment span is being termed or canceled
      */
     private EnrollmentSpan nextEnrollmentSpan;
+
+    /**
+     * to String method
+     * @return
+     */
+    @Override
+    public String toString() {
+        return "TransactionProcessingContext{" +
+                "accountNumber='" + accountNumber + '\'' +
+                ", accountSK=" + accountSK +
+                ", sendUpdateToMMS=" + sendUpdateToMMS +
+                ", isESGettingCanceled=" + isESGettingCanceled +
+                ", isESGettingTermed=" + isESGettingTermed +
+                ", nextEnrollmentSpan=" + nextEnrollmentSpan +
+                '}';
+    }
 }
