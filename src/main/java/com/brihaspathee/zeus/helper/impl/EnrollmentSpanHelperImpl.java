@@ -496,6 +496,7 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
         }
 
         if(context.isSendUpdateToMMS()){
+            List<EnrollmentSpanDto> enrollmentSpanDtos = new ArrayList<>();
             // If an update about the enrollment span is to be sent to MMS then send the update
             EnrollmentSpanDto updatedEnrollmentSpan = EnrollmentSpanDto.builder()
                     .enrollmentSpanCode(enrollmentSpanDto.getEnrollmentSpanCode())
@@ -504,9 +505,7 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                     .paidThroughDate(enrollmentSpanDto.getPaidThroughDate())
                     .claimPaidThroughDate(enrollmentSpanDto.getClaimPaidThroughDate())
                     .build();
-            EnrollmentSpanList enrollmentSpanList = EnrollmentSpanList.builder()
-                    .enrollmentSpans(List.of(updatedEnrollmentSpan))
-                    .build();
+            enrollmentSpanDtos.add(updatedEnrollmentSpan);
             if(context.isNextESReset()){
                 EnrollmentSpanDto nextEnrollmentSpan = EnrollmentSpanDto.builder()
                         .enrollmentSpanCode(context.getNextEnrollmentSpan().getEnrollmentSpanCode())
@@ -515,9 +514,11 @@ public class EnrollmentSpanHelperImpl implements EnrollmentSpanHelper {
                         .paidThroughDate(context.getNextEnrollmentSpan().getPaidThroughDate())
                         .claimPaidThroughDate(context.getNextEnrollmentSpan().getClaimPaidThroughDate())
                         .build();
-                enrollmentSpanList.getEnrollmentSpans().add(nextEnrollmentSpan);
+                enrollmentSpanDtos.add(nextEnrollmentSpan);
             }
-
+            EnrollmentSpanList enrollmentSpanList = EnrollmentSpanList.builder()
+                    .enrollmentSpans(enrollmentSpanDtos)
+                    .build();
             memberManagementService.updateEnrollmentSpan(enrollmentSpanList);
         }
     }
